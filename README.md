@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Inventory Dashboard
 
-## Getting Started
+Billing and inventory dashboard for a battery distribution business: vendor purchases, client sales, stock tracking, and receivables. Desktop-only web app.
 
-First, run the development server:
+## Stack
+
+- [Next.js](https://nextjs.org) (App Router)
+- [Prisma](https://www.prisma.io) + SQLite (local file database, no server process)
+- Custom email+password auth (bcrypt + signed session cookies), roles: `admin` / `staff`
+- [shadcn/ui](https://ui.shadcn.com) + Tailwind CSS
+
+## Setup
+
+```bash
+npm install
+cp .env.local.example .env.local
+```
+
+Generate a session secret and put it in `.env.local`:
+
+```bash
+openssl rand -base64 32
+```
+
+Apply migrations and seed the first admin user:
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+By default the seed creates `admin@example.com` / `changeme123`. Override with `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars before seeding, and change the password after first login.
+
+Run the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The SQLite file lives at `prisma/dev.db` (gitignored). Stock is auto-tracked via SQLite triggers (`prisma/migrations/*_stock_triggers/migration.sql`) that increment/decrement `skus.stockQty` on purchase/sale insert and delete, and reject a sale that would take stock negative.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To inspect the database: `npm run db:studio`.

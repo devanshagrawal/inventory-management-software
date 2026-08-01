@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// role is a plain string ("admin" | "staff") rather than a Prisma enum:
+// SQLite has no native enum type, so this is validated at the app boundary
+// (zod) instead of the DB.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  fullName     String?
+  role         String   @default("staff")
+  createdAt    DateTime @default(now())
+
+  vendorsCreated   Vendor[]   @relation("VendorCreatedBy")
+  clientsCreated   Client[]   @relation("ClientCreatedBy")
+  skusCreated      Sku[]      @relation("SkuCreatedBy")
+  purchasesCreated Purchase[] @relation("PurchaseCreatedBy")
+  salesCreated     Sale[]     @relation("SaleCreatedBy")
+  paymentsCreated  Payment[]  @relation("PaymentCreatedBy")
+
+  @@map("users")
+}
+
+model Vendor {
+  id           String   @id @default(cuid())
+  name         String
+  address      String?
+  contactNo    String?
+  contactEmail String?
+  createdById  String?
+  createdBy    User?    @relation("VendorCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  purchases Purchase[]
+
+  @@map("vendors")
+}
+
+model Client {
+  id           String   @id @default(cuid())
+  name         String
+  address      String?
+  contactNo    String?
+  contactEmail String?
+  createdById  String?
+  createdBy    User?    @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  sales Sale[]
+
+  @@map("clients")
+}
+
+model Sku {
+  id                String   @id @default(cuid())
+  companyName       String
+  modelName         String
+  modelDescription  String?
+  stockQty          Int      @default(0)
+  createdById       String?
+  createdBy         User?    @relation("SkuCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+
+  purchases Purchase[]
+  sales     Sale[]
+
+  @@map("skus")
+}
+
+// Money is stored in paise (1/100 rupee) as an integer to avoid float
+// rounding error in totals/balances. Use src/lib/money.ts to convert
+// to/from the rupee amounts shown in the UI.
+model Purchase {
+  id                String   @id @default(cuid())
+  vendorId          String
+  vendor            Vendor   @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  skuId             String
+  sku               Sku      @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  quantity          Int
+  pricePerItemPaise Int
+  purchaseDate      DateTime @default(now())
+  createdById       String?
+  createdBy         User?    @relation("PurchaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+
+  @@map("purchases")
+}
+
+model Sale {
+  id                String   @id @default(cuid())
+  clientId          String
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  skuId             String
+  sku               Sku      @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  quantity          Int
+  pricePerItemPaise Int
+  saleDate          DateTime @default(now())
+  createdById       String?
+  createdBy         User?    @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+
+  payments Payment[]
+
+  @@map("sales")
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  saleId       String
+  sale         Sale     @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  amountPaise  Int
+  paymentDate  DateTime @default(now())
+  method       String?
+  notes        String?
+  createdById  String?
+  createdBy    User?    @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  @@map("payments")
+}
