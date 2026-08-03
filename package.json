@@ -3,11 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "main": "electron/main.mjs",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "build:standalone": "next build && node electron/copy-assets.mjs",
+    "electron:dev": "electron electron/main.mjs",
+    "native:rebuild": "node electron/rebuild-native.mjs",
+    "electron:build:mac": "npm run build:standalone && electron-builder --mac",
+    "electron:build:win": "npm run build:standalone && electron-builder --win",
+    "electron:build": "npm run build:standalone && electron-builder --mac --win",
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
@@ -26,6 +33,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
+    "get-port": "^7.2.0",
     "jose": "^6.2.7",
     "lucide-react": "^1.28.0",
     "next": "16.2.12",
@@ -41,15 +49,57 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@electron/rebuild": "^4.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "png2icons": "^2.0.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",
     "typescript": "^5"
+  },
+  "build": {
+    "appId": "com.devanshagrawal.inventory-dashboard",
+    "productName": "Inventory Dashboard",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/main.mjs",
+      "!src/**/*",
+      "!prisma/**/*",
+      "!.next/**/*",
+      "!public/**/*",
+      "!electron/icons/**/*",
+      "!electron/prebuilt/**/*",
+      "!electron/*.svg"
+    ],
+    "extraResources": [
+      {
+        "from": ".next",
+        "to": "next-build",
+        "filter": ["standalone/**/*"]
+      }
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "electron/icons/icon.icns",
+      "identity": null,
+      "category": "public.app-category.business"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "electron/icons/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

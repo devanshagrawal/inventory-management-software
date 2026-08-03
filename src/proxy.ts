@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { jwtVerify } from "jose"
 
 const SESSION_COOKIE = "session"
-const PUBLIC_ROUTES = ["/login"]
+const PUBLIC_ROUTES = ["/login", "/setup"]
 
 async function hasValidSession(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value

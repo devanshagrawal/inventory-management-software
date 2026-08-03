@@ -1,0 +1,50 @@
+name: Build Windows installer
+
+# Manual only — matches the app's "manual reinstall" update strategy (no
+# auto-updater), so a new Windows build is produced on demand rather than
+# on every push. Run from the Actions tab, or `gh workflow run build-windows.yml`.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rebuild better-sqlite3 for Electron's ABI (native Windows compile)
+        run: node electron/rebuild-native.mjs
+
+      - name: Create a throwaway build-time database
+        # Next's build step imports the Prisma client module while
+        # collecting route data, so a real (if empty) SQLite file needs to
+        # exist — this also incidentally verifies the checked-in migrations
+        # apply cleanly from scratch.
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
+
+      - name: Build standalone Next.js server
+        run: npm run build:standalone
+        env:
+          DATABASE_URL: "file:./prisma/dev.db"
+          SESSION_SECRET: "build-time-placeholder-not-used-at-runtime"
+
+      - name: Package Windows installer
+        run: npx electron-builder --win
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: inventory-dashboard-windows
+          path: |
+            dist/*.exe
+            dist/*.exe.blockmap
+          if-no-files-found: error
