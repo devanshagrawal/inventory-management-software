@@ -9,6 +9,12 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    env:
+      # prisma.config.ts resolves this eagerly, so it must already be set
+      # by the time `npm ci` runs its `postinstall` (`prisma generate`) —
+      # not just on the later migrate/build steps.
+      DATABASE_URL: "file:./prisma/dev.db"
+      SESSION_SECRET: "build-time-placeholder-not-used-at-runtime"
     steps:
       - uses: actions/checkout@v7
 
@@ -28,14 +34,9 @@ jobs:
         # exist — this also incidentally verifies the checked-in migrations
         # apply cleanly from scratch.
         run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: "file:./prisma/dev.db"
 
       - name: Build standalone Next.js server
         run: npm run build:standalone
-        env:
-          DATABASE_URL: "file:./prisma/dev.db"
-          SESSION_SECRET: "build-time-placeholder-not-used-at-runtime"
 
       - name: Package Windows installer
         run: npx electron-builder --win
