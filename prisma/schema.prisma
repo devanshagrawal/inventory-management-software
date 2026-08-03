@@ -68,8 +68,8 @@ model Sku {
   createdBy         User?    @relation("SkuCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt         DateTime @default(now())
 
-  purchases Purchase[]
-  sales     Sale[]
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
 
   @@map("skus")
 }
@@ -77,38 +77,60 @@ model Sku {
 // Money is stored in paise (1/100 rupee) as an integer to avoid float
 // rounding error in totals/balances. Use src/lib/money.ts to convert
 // to/from the rupee amounts shown in the UI.
+//
+// A Purchase/Sale is an order header; the SKUs, quantities, and prices
+// live on the child *Item tables (one order can cover multiple SKUs).
 model Purchase {
-  id                String   @id @default(cuid())
-  vendorId          String
-  vendor            Vendor   @relation(fields: [vendorId], references: [id], onDelete: Restrict)
-  skuId             String
-  sku               Sku      @relation(fields: [skuId], references: [id], onDelete: Restrict)
-  quantity          Int
-  pricePerItemPaise Int
-  purchaseDate      DateTime @default(now())
-  createdById       String?
-  createdBy         User?    @relation("PurchaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt         DateTime @default(now())
+  id           String   @id @default(cuid())
+  vendorId     String
+  vendor       Vendor   @relation(fields: [vendorId], references: [id], onDelete: Restrict)
+  purchaseDate DateTime @default(now())
+  createdById  String?
+  createdBy    User?    @relation("PurchaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+
+  items PurchaseItem[]
 
   @@map("purchases")
 }
 
-model Sale {
+model PurchaseItem {
   id                String   @id @default(cuid())
-  clientId          String
-  client            Client   @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  purchaseId        String
+  purchase          Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
   skuId             String
   sku               Sku      @relation(fields: [skuId], references: [id], onDelete: Restrict)
   quantity          Int
   pricePerItemPaise Int
-  saleDate          DateTime @default(now())
-  createdById       String?
-  createdBy         User?    @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  createdAt         DateTime @default(now())
 
+  @@map("purchase_items")
+}
+
+model Sale {
+  id          String   @id @default(cuid())
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  saleDate    DateTime @default(now())
+  createdById String?
+  createdBy   User?    @relation("SaleCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  items    SaleItem[]
   payments Payment[]
 
   @@map("sales")
+}
+
+model SaleItem {
+  id                String @id @default(cuid())
+  saleId            String
+  sale              Sale   @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  skuId             String
+  sku               Sku    @relation(fields: [skuId], references: [id], onDelete: Restrict)
+  quantity          Int
+  pricePerItemPaise Int
+
+  @@map("sale_items")
 }
 
 model Payment {

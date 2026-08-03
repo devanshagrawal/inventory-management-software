@@ -4,8 +4,6 @@ import { formatPaise } from "@/lib/money"
 
 type PurchaseForPdf = {
   id: string
-  quantity: number
-  pricePerItemPaise: number
   purchaseDate: Date
   vendor: {
     name: string
@@ -13,10 +11,15 @@ type PurchaseForPdf = {
     contactNo: string | null
     contactEmail: string | null
   }
-  sku: {
-    companyName: string
-    modelName: string
-  }
+  items: {
+    id: string
+    quantity: number
+    pricePerItemPaise: number
+    sku: {
+      companyName: string
+      modelName: string
+    }
+  }[]
 }
 
 export function PurchaseBillDocument({
@@ -24,7 +27,10 @@ export function PurchaseBillDocument({
 }: {
   purchase: PurchaseForPdf
 }) {
-  const total = purchase.pricePerItemPaise * purchase.quantity
+  const total = purchase.items.reduce(
+    (sum, item) => sum + item.pricePerItemPaise * item.quantity,
+    0
+  )
 
   return (
     <Document>
@@ -58,16 +64,20 @@ export function PurchaseBillDocument({
             <Text style={styles.colPrice}>Price/item</Text>
             <Text style={styles.colTotal}>Total</Text>
           </View>
-          <View style={styles.tableRow}>
-            <Text style={styles.colItem}>
-              {purchase.sku.companyName} — {purchase.sku.modelName}
-            </Text>
-            <Text style={styles.colQty}>{purchase.quantity}</Text>
-            <Text style={styles.colPrice}>
-              {formatPaise(purchase.pricePerItemPaise)}
-            </Text>
-            <Text style={styles.colTotal}>{formatPaise(total)}</Text>
-          </View>
+          {purchase.items.map((item) => (
+            <View style={styles.tableRow} key={item.id}>
+              <Text style={styles.colItem}>
+                {item.sku.companyName} — {item.sku.modelName}
+              </Text>
+              <Text style={styles.colQty}>{item.quantity}</Text>
+              <Text style={styles.colPrice}>
+                {formatPaise(item.pricePerItemPaise)}
+              </Text>
+              <Text style={styles.colTotal}>
+                {formatPaise(item.pricePerItemPaise * item.quantity)}
+              </Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.totalsBlock}>

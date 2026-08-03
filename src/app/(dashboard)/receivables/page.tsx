@@ -18,8 +18,7 @@ export default async function ReceivablesPage() {
   const sales = await prisma.sale.findMany({
     select: {
       id: true,
-      quantity: true,
-      pricePerItemPaise: true,
+      items: { select: { quantity: true, pricePerItemPaise: true } },
       client: { select: { id: true, name: true } },
       payments: { select: { amountPaise: true } },
     },
@@ -31,7 +30,10 @@ export default async function ReceivablesPage() {
   >()
 
   for (const sale of sales) {
-    const total = sale.pricePerItemPaise * sale.quantity
+    const total = sale.items.reduce(
+      (sum, i) => sum + i.pricePerItemPaise * i.quantity,
+      0
+    )
     const paid = sale.payments.reduce((sum, p) => sum + p.amountPaise, 0)
     const existing = byClient.get(sale.client.id)
     if (existing) {
@@ -61,7 +63,8 @@ export default async function ReceivablesPage() {
       <div>
         <h1 className="text-2xl font-semibold">Receivables</h1>
         <p className="text-muted-foreground text-sm">
-          Outstanding balance per client, across all their sales bills.
+          Outstanding balance per client. Click a client for their full
+          ledger.
         </p>
       </div>
 

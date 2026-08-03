@@ -6,17 +6,10 @@ import * as z from "zod"
 import { prisma, getSqliteTriggerMessage } from "@/lib/db"
 import { requireUser, requireAdmin } from "@/lib/auth/dal"
 import { rupeesToPaise } from "@/lib/money"
+import { parseLineItems } from "@/lib/line-items"
 
-const SaleSchema = z.object({
+const SaleHeaderSchema = z.object({
   clientId: z.string().trim().min(1, { error: "Select a client." }),
-  skuId: z.string().trim().min(1, { error: "Select an item." }),
-  quantity: z.coerce
-    .number({ error: "Enter a quantity." })
-    .int({ error: "Quantity must be a whole number." })
-    .positive({ error: "Quantity must be greater than 0." }),
-  pricePerItem: z.coerce
-    .number({ error: "Enter a price." })
-    .positive({ error: "Price must be greater than 0." }),
   saleDate: z.string().trim().min(1, { error: "Pick a date." }),
 })
 
@@ -25,9 +18,6 @@ export type SaleState =
       ok: false
       errors?: {
         clientId?: string[]
-        skuId?: string[]
-        quantity?: string[]
-        pricePerItem?: string[]
         saleDate?: string[]
       }
       formError?: string
@@ -40,11 +30,8 @@ export async function createSale(
 ): Promise<SaleState> {
   const user = await requireUser()
 
-  const validated = SaleSchema.safeParse({
+  const validated = SaleHeaderSchema.safeParse({
     clientId: formData.get("clientId"),
-    skuId: formData.get("skuId"),
-    quantity: formData.get("quantity"),
-    pricePerItem: formData.get("pricePerItem"),
     saleDate: formData.get("saleDate"),
   })
 
@@ -52,18 +39,26 @@ export async function createSale(
     return { ok: false, errors: z.flattenError(validated.error).fieldErrors }
   }
 
-  const { clientId, skuId, quantity, pricePerItem, saleDate } =
-    validated.data
+  const items = parseLineItems(formData.get("items"))
+  if (!items.success) {
+    return { ok: false, formError: items.error }
+  }
+
+  const { clientId, saleDate } = validated.data
 
   try {
     await prisma.sale.create({
       data: {
         clientId,
-        skuId,
-        quantity,
-        pricePerItemPaise: rupeesToPaise(pricePerItem),
         saleDate: new Date(saleDate),
         createdById: user.id,
+        items: {
+          create: items.data.map((item) => ({
+            skuId: item.skuId,
+            quantity: item.quantity,
+            pricePerItemPaise: rupeesToPaise(item.pricePerItem),
+          })),
+        },
       },
     })
   } catch (err) {
@@ -71,7 +66,8 @@ export async function createSale(
     if (triggerMessage?.includes("Insufficient stock")) {
       return {
         ok: false,
-        formError: "Not enough stock for this SKU to complete this sale.",
+        formError:
+          "Not enough stock for one of the items to complete this sale. Nothing was saved.",
       }
     }
     return { ok: false, formError: "Failed to record sale." }

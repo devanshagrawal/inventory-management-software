@@ -13,7 +13,7 @@ export async function GET(
 
   const sale = await prisma.sale.findUnique({
     where: { id },
-    include: { client: true, sku: true },
+    include: { client: true, items: { include: { sku: true } } },
   })
 
   if (!sale) {

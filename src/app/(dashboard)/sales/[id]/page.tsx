@@ -9,6 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SaleDeleteButton } from "@/components/sales/sale-delete-button"
@@ -27,7 +35,7 @@ export default async function SaleDetailPage({
     where: { id },
     include: {
       client: true,
-      sku: true,
+      items: { include: { sku: true } },
       payments: { orderBy: { paymentDate: "desc" } },
     },
   })
@@ -36,7 +44,10 @@ export default async function SaleDetailPage({
     notFound()
   }
 
-  const total = sale.pricePerItemPaise * sale.quantity
+  const total = sale.items.reduce(
+    (sum, item) => sum + item.pricePerItemPaise * item.quantity,
+    0
+  )
   const paid = sale.payments.reduce((sum, p) => sum + p.amountPaise, 0)
   const balance = total - paid
 
@@ -69,43 +80,60 @@ export default async function SaleDetailPage({
         </div>
       </div>
 
-      <div className="grid max-w-2xl grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
-              Client
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            <p className="font-medium">{sale.client.name}</p>
-            {sale.client.address && (
-              <p className="text-muted-foreground text-sm">
-                {sale.client.address}
-              </p>
-            )}
-            {sale.client.contactNo && (
-              <p className="text-muted-foreground text-sm">
-                {sale.client.contactNo}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
-              Item
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            <p className="font-medium">
-              {sale.sku.companyName} — {sale.sku.modelName}
-            </p>
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">
+            Client
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          <p className="font-medium">{sale.client.name}</p>
+          {sale.client.address && (
             <p className="text-muted-foreground text-sm">
-              Qty {sale.quantity} × {formatPaise(sale.pricePerItemPaise)}
+              {sale.client.address}
             </p>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+          {sale.client.contactNo && (
+            <p className="text-muted-foreground text-sm">
+              {sale.client.contactNo}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">
+            Items
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Item</TableHead>
+                <TableHead>Qty</TableHead>
+                <TableHead>Price/item</TableHead>
+                <TableHead>Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sale.items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    {item.sku.companyName} — {item.sku.modelName}
+                  </TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{formatPaise(item.pricePerItemPaise)}</TableCell>
+                  <TableCell>
+                    {formatPaise(item.pricePerItemPaise * item.quantity)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card className="max-w-2xl">
         <CardHeader>

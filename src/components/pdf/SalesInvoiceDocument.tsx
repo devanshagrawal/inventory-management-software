@@ -4,8 +4,6 @@ import { formatPaise } from "@/lib/money"
 
 type SaleForPdf = {
   id: string
-  quantity: number
-  pricePerItemPaise: number
   saleDate: Date
   client: {
     name: string
@@ -13,14 +11,22 @@ type SaleForPdf = {
     contactNo: string | null
     contactEmail: string | null
   }
-  sku: {
-    companyName: string
-    modelName: string
-  }
+  items: {
+    id: string
+    quantity: number
+    pricePerItemPaise: number
+    sku: {
+      companyName: string
+      modelName: string
+    }
+  }[]
 }
 
 export function SalesInvoiceDocument({ sale }: { sale: SaleForPdf }) {
-  const total = sale.pricePerItemPaise * sale.quantity
+  const total = sale.items.reduce(
+    (sum, item) => sum + item.pricePerItemPaise * item.quantity,
+    0
+  )
 
   return (
     <Document>
@@ -54,16 +60,20 @@ export function SalesInvoiceDocument({ sale }: { sale: SaleForPdf }) {
             <Text style={styles.colPrice}>Price/item</Text>
             <Text style={styles.colTotal}>Total</Text>
           </View>
-          <View style={styles.tableRow}>
-            <Text style={styles.colItem}>
-              {sale.sku.companyName} — {sale.sku.modelName}
-            </Text>
-            <Text style={styles.colQty}>{sale.quantity}</Text>
-            <Text style={styles.colPrice}>
-              {formatPaise(sale.pricePerItemPaise)}
-            </Text>
-            <Text style={styles.colTotal}>{formatPaise(total)}</Text>
-          </View>
+          {sale.items.map((item) => (
+            <View style={styles.tableRow} key={item.id}>
+              <Text style={styles.colItem}>
+                {item.sku.companyName} — {item.sku.modelName}
+              </Text>
+              <Text style={styles.colQty}>{item.quantity}</Text>
+              <Text style={styles.colPrice}>
+                {formatPaise(item.pricePerItemPaise)}
+              </Text>
+              <Text style={styles.colTotal}>
+                {formatPaise(item.pricePerItemPaise * item.quantity)}
+              </Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.totalsBlock}>

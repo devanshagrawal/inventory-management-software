@@ -12,11 +12,24 @@ import { PurchaseDeleteButton } from "@/components/purchases/purchase-delete-but
 
 type Purchase = {
   id: string
-  quantity: number
-  pricePerItemPaise: number
   purchaseDate: Date
   vendor: { name: string }
-  sku: { companyName: string; modelName: string }
+  items: {
+    quantity: number
+    pricePerItemPaise: number
+    sku: { companyName: string; modelName: string }
+  }[]
+}
+
+function itemsSummary(items: Purchase["items"]) {
+  if (items.length === 0) return "—"
+  const first = items[0]
+  const label = `${first.sku.companyName} — ${first.sku.modelName}`
+  return items.length > 1 ? `${label} +${items.length - 1} more` : label
+}
+
+function purchaseTotal(items: Purchase["items"]) {
+  return items.reduce((sum, i) => sum + i.pricePerItemPaise * i.quantity, 0)
 }
 
 export function PurchasesTable({
@@ -36,9 +49,7 @@ export function PurchasesTable({
         <TableRow>
           <TableHead>Date</TableHead>
           <TableHead>Vendor</TableHead>
-          <TableHead>Item</TableHead>
-          <TableHead>Qty</TableHead>
-          <TableHead>Price/item</TableHead>
+          <TableHead>Items</TableHead>
           <TableHead>Total</TableHead>
           <TableHead className="w-1">Actions</TableHead>
         </TableRow>
@@ -52,14 +63,8 @@ export function PurchasesTable({
             <TableCell className="font-medium">
               {purchase.vendor.name}
             </TableCell>
-            <TableCell>
-              {purchase.sku.companyName} — {purchase.sku.modelName}
-            </TableCell>
-            <TableCell>{purchase.quantity}</TableCell>
-            <TableCell>{formatPaise(purchase.pricePerItemPaise)}</TableCell>
-            <TableCell>
-              {formatPaise(purchase.pricePerItemPaise * purchase.quantity)}
-            </TableCell>
+            <TableCell>{itemsSummary(purchase.items)}</TableCell>
+            <TableCell>{formatPaise(purchaseTotal(purchase.items))}</TableCell>
             <TableCell className="flex gap-1">
               <Link
                 href={`/purchases/${purchase.id}`}

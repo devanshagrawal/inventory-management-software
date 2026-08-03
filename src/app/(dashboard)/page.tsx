@@ -15,25 +15,30 @@ export default async function DashboardPage() {
     prisma.sku.count(),
     prisma.sale.findMany({
       select: {
-        quantity: true,
-        pricePerItemPaise: true,
+        items: { select: { quantity: true, pricePerItemPaise: true } },
         payments: { select: { amountPaise: true } },
       },
     }),
     prisma.sale.findMany({
       where: { saleDate: { gte: monthStart } },
-      select: { quantity: true, pricePerItemPaise: true },
+      select: {
+        items: { select: { quantity: true, pricePerItemPaise: true } },
+      },
     }),
   ])
 
+  function saleTotal(items: { quantity: number; pricePerItemPaise: number }[]) {
+    return items.reduce((sum, i) => sum + i.pricePerItemPaise * i.quantity, 0)
+  }
+
   const outstanding = sales.reduce((sum, sale) => {
-    const total = sale.pricePerItemPaise * sale.quantity
+    const total = saleTotal(sale.items)
     const paid = sale.payments.reduce((s, p) => s + p.amountPaise, 0)
     return sum + (total - paid)
   }, 0)
 
   const salesThisMonthTotal = salesThisMonth.reduce(
-    (sum, sale) => sum + sale.pricePerItemPaise * sale.quantity,
+    (sum, sale) => sum + saleTotal(sale.items),
     0
   )
 

@@ -13,7 +13,16 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 
-export default async function ClientReceivablesPage({
+type LedgerEntry = {
+  date: Date
+  sortKey: Date
+  description: string
+  debit: number
+  credit: number
+  href: string
+}
+
+export default async function ClientLedgerPage({
   params,
 }: {
   params: Promise<{ clientId: string }>
@@ -25,10 +34,9 @@ export default async function ClientReceivablesPage({
     where: { id: clientId },
     include: {
       sales: {
-        orderBy: { saleDate: "desc" },
         include: {
-          sku: { select: { companyName: true, modelName: true } },
-          payments: { select: { amountPaise: true } },
+          items: { select: { quantity: true, pricePerItemPaise: true } },
+          payments: true,
         },
       },
     },
@@ -38,11 +46,50 @@ export default async function ClientReceivablesPage({
     notFound()
   }
 
-  const rows = client.sales.map((sale) => {
-    const total = sale.pricePerItemPaise * sale.quantity
-    const paid = sale.payments.reduce((sum, p) => sum + p.amountPaise, 0)
-    return { ...sale, total, paid, balance: total - paid }
+  const entries: LedgerEntry[] = []
+
+  for (const sale of client.sales) {
+    const total = sale.items.reduce(
+      (sum, i) => sum + i.pricePerItemPaise * i.quantity,
+      0
+    )
+    const itemCount = sale.items.length
+    entries.push({
+      date: sale.saleDate,
+      sortKey: sale.createdAt,
+      description: `Sale — ${itemCount} item${itemCount === 1 ? "" : "s"}`,
+      debit: total,
+      credit: 0,
+      href: `/sales/${sale.id}`,
+    })
+
+    for (const payment of sale.payments) {
+      entries.push({
+        date: payment.paymentDate,
+        sortKey: payment.createdAt,
+        description: payment.method
+          ? `Payment received (${payment.method})`
+          : "Payment received",
+        debit: 0,
+        credit: payment.amountPaise,
+        href: `/sales/${sale.id}`,
+      })
+    }
+  }
+
+  entries.sort(
+    (a, b) =>
+      a.date.getTime() - b.date.getTime() ||
+      a.sortKey.getTime() - b.sortKey.getTime()
+  )
+
+  let running = 0
+  const rows = entries.map((entry) => {
+    running += entry.debit - entry.credit
+    return { ...entry, balance: running }
   })
+
+  const closingBalance = running
 
   return (
     <div className="flex flex-col gap-6">
@@ -53,46 +100,56 @@ export default async function ClientReceivablesPage({
         >
           ← Receivables
         </Link>
-        <h1 className="text-2xl font-semibold">{client.name}</h1>
+        <h1 className="text-2xl font-semibold">{client.name} — Ledger</h1>
+        <p className="text-muted-foreground text-sm">
+          Chronological record of sales (debit) and payments (credit) for
+          this client.
+        </p>
       </div>
+
+      <p className="text-lg font-semibold">
+        Closing balance: {formatPaise(closingBalance)}
+      </p>
 
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">
-          No sales bills for this client yet.
+          No sales or payments for this client yet.
         </p>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>Item</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Paid</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Debit</TableHead>
+              <TableHead>Credit</TableHead>
               <TableHead>Balance</TableHead>
-              <TableHead className="w-1">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.saleDate.toLocaleDateString("en-IN")}</TableCell>
-                <TableCell>
-                  {row.sku.companyName} — {row.sku.modelName}
-                </TableCell>
-                <TableCell>{formatPaise(row.total)}</TableCell>
-                <TableCell>{formatPaise(row.paid)}</TableCell>
-                <TableCell>
-                  <Badge variant={row.balance > 0 ? "destructive" : "secondary"}>
-                    {formatPaise(row.balance)}
-                  </Badge>
-                </TableCell>
+            {rows.map((row, i) => (
+              <TableRow key={i}>
+                <TableCell>{row.date.toLocaleDateString("en-IN")}</TableCell>
                 <TableCell>
                   <Link
-                    href={`/sales/${row.id}`}
-                    className="text-sm underline underline-offset-2"
+                    href={row.href}
+                    className="underline underline-offset-2"
                   >
-                    View
+                    {row.description}
                   </Link>
+                </TableCell>
+                <TableCell>
+                  {row.debit > 0 ? formatPaise(row.debit) : "—"}
+                </TableCell>
+                <TableCell>
+                  {row.credit > 0 ? formatPaise(row.credit) : "—"}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={row.balance > 0 ? "destructive" : "secondary"}
+                  >
+                    {formatPaise(row.balance)}
+                  </Badge>
                 </TableCell>
               </TableRow>
             ))}

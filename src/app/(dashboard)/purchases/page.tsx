@@ -11,11 +11,15 @@ export default async function PurchasesPage() {
     orderBy: { purchaseDate: "desc" },
     select: {
       id: true,
-      quantity: true,
-      pricePerItemPaise: true,
       purchaseDate: true,
       vendor: { select: { name: true } },
-      sku: { select: { companyName: true, modelName: true } },
+      items: {
+        select: {
+          quantity: true,
+          pricePerItemPaise: true,
+          sku: { select: { companyName: true, modelName: true } },
+        },
+      },
     },
   })
 

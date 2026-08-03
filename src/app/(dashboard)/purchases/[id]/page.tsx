@@ -5,6 +5,14 @@ import { requireUser } from "@/lib/auth/dal"
 import { formatPaise } from "@/lib/money"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { PurchaseDeleteButton } from "@/components/purchases/purchase-delete-button"
 
 export default async function PurchaseDetailPage({
@@ -19,7 +27,7 @@ export default async function PurchaseDetailPage({
     where: { id },
     include: {
       vendor: true,
-      sku: true,
+      items: { include: { sku: true } },
     },
   })
 
@@ -27,7 +35,10 @@ export default async function PurchaseDetailPage({
     notFound()
   }
 
-  const total = purchase.pricePerItemPaise * purchase.quantity
+  const total = purchase.items.reduce(
+    (sum, item) => sum + item.pricePerItemPaise * item.quantity,
+    0
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,43 +71,60 @@ export default async function PurchaseDetailPage({
         </div>
       </div>
 
-      <div className="grid max-w-2xl grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
-              Vendor
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            <p className="font-medium">{purchase.vendor.name}</p>
-            {purchase.vendor.address && (
-              <p className="text-muted-foreground text-sm">
-                {purchase.vendor.address}
-              </p>
-            )}
-            {purchase.vendor.contactNo && (
-              <p className="text-muted-foreground text-sm">
-                {purchase.vendor.contactNo}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground">
-              Item
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            <p className="font-medium">
-              {purchase.sku.companyName} — {purchase.sku.modelName}
-            </p>
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">
+            Vendor
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-1">
+          <p className="font-medium">{purchase.vendor.name}</p>
+          {purchase.vendor.address && (
             <p className="text-muted-foreground text-sm">
-              Qty {purchase.quantity} × {formatPaise(purchase.pricePerItemPaise)}
+              {purchase.vendor.address}
             </p>
-          </CardContent>
-        </Card>
-      </div>
+          )}
+          {purchase.vendor.contactNo && (
+            <p className="text-muted-foreground text-sm">
+              {purchase.vendor.contactNo}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">
+            Items
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Item</TableHead>
+                <TableHead>Qty</TableHead>
+                <TableHead>Price/item</TableHead>
+                <TableHead>Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {purchase.items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    {item.sku.companyName} — {item.sku.modelName}
+                  </TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{formatPaise(item.pricePerItemPaise)}</TableCell>
+                  <TableCell>
+                    {formatPaise(item.pricePerItemPaise * item.quantity)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card className="max-w-2xl">
         <CardHeader>

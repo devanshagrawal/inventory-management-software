@@ -11,11 +11,15 @@ export default async function SalesPage() {
     orderBy: { saleDate: "desc" },
     select: {
       id: true,
-      quantity: true,
-      pricePerItemPaise: true,
       saleDate: true,
       client: { select: { name: true } },
-      sku: { select: { companyName: true, modelName: true } },
+      items: {
+        select: {
+          quantity: true,
+          pricePerItemPaise: true,
+          sku: { select: { companyName: true, modelName: true } },
+        },
+      },
     },
   })
 
