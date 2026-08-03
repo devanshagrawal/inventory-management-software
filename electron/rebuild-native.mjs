@@ -56,7 +56,10 @@ try {
       arch,
       "--force",
     ],
-    { cwd: projectRoot, stdio: "inherit" }
+    // Windows' `npx` is a `.cmd` shim — execFileSync only finds it if the
+    // shell resolves it, which "shell: true" turns on. Harmless on
+    // mac/Linux since npx is a real executable there either way.
+    { cwd: projectRoot, stdio: "inherit", shell: true }
   )
 
   mkdirSync(outDir, { recursive: true })
