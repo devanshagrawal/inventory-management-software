@@ -39,7 +39,10 @@ jobs:
         run: npm run build:standalone
 
       - name: Package Windows installer
-        run: npx electron-builder --win
+        # electron-builder auto-detects CI and tries to publish a GitHub
+        # Release by default, which needs a GH_TOKEN we don't have (and
+        # don't want) — --publish never keeps this a local artifact build.
+        run: npx electron-builder --win --publish never
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
