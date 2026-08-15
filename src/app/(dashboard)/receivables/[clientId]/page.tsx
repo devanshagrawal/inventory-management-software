@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { ClientPaymentDialog } from "@/components/receivables/client-payment-dialog"
 
 type LedgerEntry = {
   date: Date
@@ -19,7 +20,7 @@ type LedgerEntry = {
   description: string
   debit: number
   credit: number
-  href: string
+  href: string | null
 }
 
 export default async function ClientLedgerPage({
@@ -36,9 +37,9 @@ export default async function ClientLedgerPage({
       sales: {
         include: {
           items: { select: { quantity: true, pricePerItemPaise: true } },
-          payments: true,
         },
       },
+      payments: true,
     },
   })
 
@@ -62,19 +63,19 @@ export default async function ClientLedgerPage({
       credit: 0,
       href: `/sales/${sale.id}`,
     })
+  }
 
-    for (const payment of sale.payments) {
-      entries.push({
-        date: payment.paymentDate,
-        sortKey: payment.createdAt,
-        description: payment.method
-          ? `Payment received (${payment.method})`
-          : "Payment received",
-        debit: 0,
-        credit: payment.amountPaise,
-        href: `/sales/${sale.id}`,
-      })
-    }
+  for (const payment of client.payments) {
+    entries.push({
+      date: payment.paymentDate,
+      sortKey: payment.createdAt,
+      description: payment.method
+        ? `Payment received (${payment.method})`
+        : "Payment received",
+      debit: 0,
+      credit: payment.amountPaise,
+      href: payment.saleId ? `/sales/${payment.saleId}` : null,
+    })
   }
 
   entries.sort(
@@ -93,18 +94,21 @@ export default async function ClientLedgerPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <Link
-          href="/receivables"
-          className="text-muted-foreground text-sm underline underline-offset-2"
-        >
-          ← Receivables
-        </Link>
-        <h1 className="text-2xl font-semibold">{client.name} — Ledger</h1>
-        <p className="text-muted-foreground text-sm">
-          Chronological record of sales (debit) and payments (credit) for
-          this client.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <Link
+            href="/receivables"
+            className="text-muted-foreground text-sm underline underline-offset-2"
+          >
+            ← Receivables
+          </Link>
+          <h1 className="text-2xl font-semibold">{client.name} — Ledger</h1>
+          <p className="text-muted-foreground text-sm">
+            Chronological record of sales (debit) and payments (credit) for
+            this client.
+          </p>
+        </div>
+        <ClientPaymentDialog clientId={client.id} />
       </div>
 
       <p className="text-lg font-semibold">
@@ -131,12 +135,16 @@ export default async function ClientLedgerPage({
               <TableRow key={i}>
                 <TableCell>{row.date.toLocaleDateString("en-IN")}</TableCell>
                 <TableCell>
-                  <Link
-                    href={row.href}
-                    className="underline underline-offset-2"
-                  >
-                    {row.description}
-                  </Link>
+                  {row.href ? (
+                    <Link
+                      href={row.href}
+                      className="underline underline-offset-2"
+                    >
+                      {row.description}
+                    </Link>
+                  ) : (
+                    row.description
+                  )}
                 </TableCell>
                 <TableCell>
                   {row.debit > 0 ? formatPaise(row.debit) : "—"}

@@ -15,11 +15,15 @@ import { Badge } from "@/components/ui/badge"
 export default async function ReceivablesPage() {
   await requireUser()
 
-  const sales = await prisma.sale.findMany({
+  const clients = await prisma.client.findMany({
     select: {
       id: true,
-      items: { select: { quantity: true, pricePerItemPaise: true } },
-      client: { select: { id: true, name: true } },
+      name: true,
+      sales: {
+        select: {
+          items: { select: { quantity: true, pricePerItemPaise: true } },
+        },
+      },
       payments: { select: { amountPaise: true } },
     },
   })
@@ -29,23 +33,16 @@ export default async function ReceivablesPage() {
     { name: string; billed: number; paid: number }
   >()
 
-  for (const sale of sales) {
-    const total = sale.items.reduce(
-      (sum, i) => sum + i.pricePerItemPaise * i.quantity,
+  for (const client of clients) {
+    const billed = client.sales.reduce(
+      (sum, sale) =>
+        sum +
+        sale.items.reduce((s, i) => s + i.pricePerItemPaise * i.quantity, 0),
       0
     )
-    const paid = sale.payments.reduce((sum, p) => sum + p.amountPaise, 0)
-    const existing = byClient.get(sale.client.id)
-    if (existing) {
-      existing.billed += total
-      existing.paid += paid
-    } else {
-      byClient.set(sale.client.id, {
-        name: sale.client.name,
-        billed: total,
-        paid,
-      })
-    }
+    const paid = client.payments.reduce((sum, p) => sum + p.amountPaise, 0)
+    if (billed === 0 && paid === 0) continue
+    byClient.set(client.id, { name: client.name, billed, paid })
   }
 
   const rows = Array.from(byClient.entries())

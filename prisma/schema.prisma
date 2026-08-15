@@ -53,7 +53,8 @@ model Client {
   createdBy    User?    @relation("ClientCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
 
-  sales Sale[]
+  sales    Sale[]
+  payments Payment[]
 
   @@map("clients")
 }
@@ -133,10 +134,16 @@ model SaleItem {
   @@map("sale_items")
 }
 
+// A payment is always against a client; saleId is an optional allocation to
+// a specific invoice (set when recorded from a Sale's detail page) — a
+// payment can also stand alone, e.g. a client settling their running
+// balance without it being tied to one particular sale.
 model Payment {
   id           String   @id @default(cuid())
-  saleId       String
-  sale         Sale     @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  saleId       String?
+  sale         Sale?    @relation(fields: [saleId], references: [id], onDelete: SetNull)
   amountPaise  Int
   paymentDate  DateTime @default(now())
   method       String?

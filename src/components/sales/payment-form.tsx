@@ -5,10 +5,10 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { createPayment, type PaymentState } from "@/lib/payments/actions"
+import { createSalePayment, type PaymentState } from "@/lib/payments/actions"
 
 export function PaymentForm({ saleId }: { saleId: string }) {
-  const action = createPayment.bind(null, saleId)
+  const action = createSalePayment.bind(null, saleId)
   const [state, formAction, pending] = useActionState<PaymentState, FormData>(
     action,
     undefined
