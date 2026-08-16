@@ -33,12 +33,18 @@ export function DashboardShell({
         >
           <MenuIcon className="size-4" />
         </Button>
-        <span className="text-sm font-semibold">Inventory Dashboard</span>
+        <span className="flex items-center gap-2 font-heading text-sm font-semibold tracking-wide">
+          <span
+            className="size-1.5 shrink-0 rounded-full bg-primary"
+            aria-hidden="true"
+          />
+          Inventory Dashboard
+        </span>
       </header>
       <div className="flex flex-1 overflow-hidden">
         <aside
           className={cn(
-            "flex shrink-0 flex-col overflow-hidden border-r bg-muted/30 transition-[width] duration-200",
+            "flex shrink-0 flex-col overflow-hidden border-r bg-sidebar transition-[width] duration-200",
             open ? "w-56" : "w-0 border-r-0"
           )}
         >
@@ -49,7 +55,9 @@ export function DashboardShell({
             </div>
           </div>
         </aside>
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="bg-grid-paper flex-1 overflow-y-auto p-8">
+          {children}
+        </main>
       </div>
     </div>
   )

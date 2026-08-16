@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { StatTile } from "@/components/stat-tile"
 import { ClientPaymentDialog } from "@/components/receivables/client-payment-dialog"
 
 type LedgerEntry = {
@@ -111,9 +112,12 @@ export default async function ClientLedgerPage({
         <ClientPaymentDialog clientId={client.id} />
       </div>
 
-      <p className="text-lg font-semibold">
-        Closing balance: {formatPaise(closingBalance)}
-      </p>
+      <StatTile
+        label="Closing balance"
+        value={formatPaise(closingBalance)}
+        tone={closingBalance > 0 ? "bad" : "good"}
+        className="w-fit min-w-56"
+      />
 
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">
@@ -125,15 +129,17 @@ export default async function ClientLedgerPage({
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Debit</TableHead>
-              <TableHead>Credit</TableHead>
-              <TableHead>Balance</TableHead>
+              <TableHead className="text-right">Debit</TableHead>
+              <TableHead className="text-right">Credit</TableHead>
+              <TableHead className="text-right">Balance</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((row, i) => (
               <TableRow key={i}>
-                <TableCell>{row.date.toLocaleDateString("en-IN")}</TableCell>
+                <TableCell className="font-mono text-sm tabular-nums">
+                  {row.date.toLocaleDateString("en-IN")}
+                </TableCell>
                 <TableCell>
                   {row.href ? (
                     <Link
@@ -146,15 +152,16 @@ export default async function ClientLedgerPage({
                     row.description
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
                   {row.debit > 0 ? formatPaise(row.debit) : "—"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
                   {row.credit > 0 ? formatPaise(row.credit) : "—"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <Badge
-                    variant={row.balance > 0 ? "destructive" : "secondary"}
+                    variant={row.balance > 0 ? "destructive" : "success"}
+                    className="font-mono tabular-nums"
                   >
                     {formatPaise(row.balance)}
                   </Badge>

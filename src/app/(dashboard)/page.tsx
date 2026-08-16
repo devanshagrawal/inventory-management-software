@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
+import { StatTile } from "@/components/stat-tile"
 import { prisma } from "@/lib/db"
 import { formatPaise } from "@/lib/money"
 
@@ -51,28 +46,17 @@ export default async function DashboardPage() {
         </p>
       </div>
       <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardDescription>SKUs in catalog</CardDescription>
-            <CardTitle className="text-3xl">{skuCount}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Outstanding receivables</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatPaise(outstanding)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Sales this month</CardDescription>
-            <CardTitle className="text-3xl">
-              {formatPaise(salesThisMonthTotal)}
-            </CardTitle>
-          </CardHeader>
-        </Card>
+        <StatTile label="SKUs in catalog" value={skuCount} />
+        <StatTile
+          label="Outstanding receivables"
+          value={formatPaise(outstanding)}
+          tone={outstanding > 0 ? "bad" : "good"}
+        />
+        <StatTile
+          label="Sales this month"
+          value={formatPaise(salesThisMonthTotal)}
+          tone="good"
+        />
       </div>
     </div>
   )

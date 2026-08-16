@@ -172,7 +172,9 @@ export function LineItemsEditor({
       {grandTotal > 0 && (
         <p className="text-sm">
           Grand total:{" "}
-          <span className="font-medium">{formatPaise(grandTotal)}</span>
+          <span className="font-mono font-medium tabular-nums">
+            {formatPaise(grandTotal)}
+          </span>
         </p>
       )}
     </div>

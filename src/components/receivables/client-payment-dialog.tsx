@@ -41,7 +41,17 @@ export function ClientPaymentDialog({ clientId }: { clientId: string }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button>Record payment</Button>} />
+      <DialogTrigger
+        render={
+          <Button>
+            <span
+              className="size-1.5 shrink-0 rounded-full bg-current opacity-80"
+              aria-hidden="true"
+            />
+            Record payment
+          </Button>
+        }
+      />
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Record payment</DialogTitle>

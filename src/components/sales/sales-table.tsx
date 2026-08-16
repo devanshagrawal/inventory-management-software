@@ -50,17 +50,21 @@ export function SalesTable({
           <TableHead>Date</TableHead>
           <TableHead>Client</TableHead>
           <TableHead>Items</TableHead>
-          <TableHead>Total</TableHead>
+          <TableHead className="text-right">Total</TableHead>
           <TableHead className="w-1">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {sales.map((sale) => (
           <TableRow key={sale.id}>
-            <TableCell>{sale.saleDate.toLocaleDateString("en-IN")}</TableCell>
+            <TableCell className="font-mono text-sm tabular-nums">
+              {sale.saleDate.toLocaleDateString("en-IN")}
+            </TableCell>
             <TableCell className="font-medium">{sale.client.name}</TableCell>
             <TableCell>{itemsSummary(sale.items)}</TableCell>
-            <TableCell>{formatPaise(saleTotal(sale.items))}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums">
+              {formatPaise(saleTotal(sale.items))}
+            </TableCell>
             <TableCell className="flex gap-1">
               <Link
                 href={`/sales/${sale.id}`}

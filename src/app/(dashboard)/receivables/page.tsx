@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { StatTile } from "@/components/stat-tile"
 
 export default async function ReceivablesPage() {
   await requireUser()
@@ -65,9 +66,12 @@ export default async function ReceivablesPage() {
         </p>
       </div>
 
-      <p className="text-lg font-semibold">
-        Total outstanding: {formatPaise(totalOutstanding)}
-      </p>
+      <StatTile
+        label="Total outstanding"
+        value={formatPaise(totalOutstanding)}
+        tone={totalOutstanding > 0 ? "bad" : "good"}
+        className="w-fit min-w-56"
+      />
 
       {rows.length === 0 ? (
         <p className="text-muted-foreground text-sm">No sales recorded yet.</p>
@@ -76,9 +80,9 @@ export default async function ReceivablesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Client</TableHead>
-              <TableHead>Billed</TableHead>
-              <TableHead>Paid</TableHead>
-              <TableHead>Outstanding</TableHead>
+              <TableHead className="text-right">Billed</TableHead>
+              <TableHead className="text-right">Paid</TableHead>
+              <TableHead className="text-right">Outstanding</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -92,11 +96,16 @@ export default async function ReceivablesPage() {
                     {row.name}
                   </Link>
                 </TableCell>
-                <TableCell>{formatPaise(row.billed)}</TableCell>
-                <TableCell>{formatPaise(row.paid)}</TableCell>
-                <TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {formatPaise(row.billed)}
+                </TableCell>
+                <TableCell className="text-right font-mono tabular-nums">
+                  {formatPaise(row.paid)}
+                </TableCell>
+                <TableCell className="text-right">
                   <Badge
-                    variant={row.outstanding > 0 ? "destructive" : "secondary"}
+                    variant={row.outstanding > 0 ? "destructive" : "success"}
+                    className="font-mono tabular-nums"
                   >
                     {formatPaise(row.outstanding)}
                   </Badge>

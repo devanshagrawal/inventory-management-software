@@ -19,10 +19,10 @@ export function SidebarNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             className={cn(
-              "rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "border-l-2 px-3 py-2 text-sm font-medium transition-colors",
               isActive
-                ? "bg-secondary text-secondary-foreground"
-                : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                ? "border-primary bg-secondary text-secondary-foreground"
+                : "border-transparent text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
             )}
           >
             {item.label}

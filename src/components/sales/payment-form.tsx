@@ -78,6 +78,10 @@ export function PaymentForm({ saleId }: { saleId: string }) {
         <p className="text-destructive text-sm">{state.formError}</p>
       )}
       <Button type="submit" disabled={pending} className="w-fit">
+        <span
+          className="size-1.5 shrink-0 rounded-full bg-current opacity-80"
+          aria-hidden="true"
+        />
         {pending ? "Saving..." : "Record payment"}
       </Button>
     </form>

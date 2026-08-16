@@ -66,6 +66,7 @@ export default async function SaleDetailPage({
         <div className="flex gap-2">
           <Button
             variant="outline"
+            nativeButton={false}
             render={
               <a
                 href={`/api/pdf/sales/${sale.id}`}
@@ -112,9 +113,9 @@ export default async function SaleDetailPage({
             <TableHeader>
               <TableRow>
                 <TableHead>Item</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Price/item</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead className="text-right">Price/item</TableHead>
+                <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -123,9 +124,13 @@ export default async function SaleDetailPage({
                   <TableCell>
                     {item.sku.companyName} — {item.sku.modelName}
                   </TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{formatPaise(item.pricePerItemPaise)}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
+                    {item.quantity}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
+                    {formatPaise(item.pricePerItemPaise)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
                     {formatPaise(item.pricePerItemPaise * item.quantity)}
                   </TableCell>
                 </TableRow>
@@ -143,11 +148,16 @@ export default async function SaleDetailPage({
         </CardHeader>
         <CardContent className="flex flex-col gap-2">
           <p>Date: {sale.saleDate.toLocaleDateString("en-IN")}</p>
-          <p className="text-lg font-semibold">Total: {formatPaise(total)}</p>
-          <p>Paid: {formatPaise(paid)}</p>
+          <p className="font-mono text-lg font-semibold tabular-nums">
+            Total: {formatPaise(total)}
+          </p>
+          <p className="font-mono tabular-nums">Paid: {formatPaise(paid)}</p>
           <div className="flex items-center gap-2">
             <span>Balance due:</span>
-            <Badge variant={balance > 0 ? "destructive" : "secondary"}>
+            <Badge
+              variant={balance > 0 ? "destructive" : "success"}
+              className="font-mono tabular-nums"
+            >
               {formatPaise(balance)}
             </Badge>
           </div>

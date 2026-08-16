@@ -50,21 +50,23 @@ export function PurchasesTable({
           <TableHead>Date</TableHead>
           <TableHead>Vendor</TableHead>
           <TableHead>Items</TableHead>
-          <TableHead>Total</TableHead>
+          <TableHead className="text-right">Total</TableHead>
           <TableHead className="w-1">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {purchases.map((purchase) => (
           <TableRow key={purchase.id}>
-            <TableCell>
+            <TableCell className="font-mono text-sm tabular-nums">
               {purchase.purchaseDate.toLocaleDateString("en-IN")}
             </TableCell>
             <TableCell className="font-medium">
               {purchase.vendor.name}
             </TableCell>
             <TableCell>{itemsSummary(purchase.items)}</TableCell>
-            <TableCell>{formatPaise(purchaseTotal(purchase.items))}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums">
+              {formatPaise(purchaseTotal(purchase.items))}
+            </TableCell>
             <TableCell className="flex gap-1">
               <Link
                 href={`/purchases/${purchase.id}`}

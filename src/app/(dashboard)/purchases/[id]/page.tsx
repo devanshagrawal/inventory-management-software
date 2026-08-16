@@ -55,6 +55,7 @@ export default async function PurchaseDetailPage({
         <div className="flex gap-2">
           <Button
             variant="outline"
+            nativeButton={false}
             render={
               <a
                 href={`/api/pdf/purchases/${purchase.id}`}
@@ -103,9 +104,9 @@ export default async function PurchaseDetailPage({
             <TableHeader>
               <TableRow>
                 <TableHead>Item</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead>Price/item</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead className="text-right">Price/item</TableHead>
+                <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -114,9 +115,13 @@ export default async function PurchaseDetailPage({
                   <TableCell>
                     {item.sku.companyName} — {item.sku.modelName}
                   </TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{formatPaise(item.pricePerItemPaise)}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
+                    {item.quantity}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
+                    {formatPaise(item.pricePerItemPaise)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono tabular-nums">
                     {formatPaise(item.pricePerItemPaise * item.quantity)}
                   </TableCell>
                 </TableRow>
@@ -134,7 +139,9 @@ export default async function PurchaseDetailPage({
         </CardHeader>
         <CardContent className="flex flex-col gap-1">
           <p>Date: {purchase.purchaseDate.toLocaleDateString("en-IN")}</p>
-          <p className="text-lg font-semibold">Total: {formatPaise(total)}</p>
+          <p className="font-mono text-lg font-semibold tabular-nums">
+            Total: {formatPaise(total)}
+          </p>
         </CardContent>
       </Card>
     </div>
